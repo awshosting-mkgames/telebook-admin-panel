@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+
+# `.env` JAAN-BUJH KAR commit hoti hai — usme sirf backend ka pata hai,
+# koi raaz nahi.
+#
+# Aur usme raaz rakhna chahiye bhi nahi: Vite har `VITE_*` variable ko
+# build ke waqt JavaScript ke andar chipka deta hai, yaani woh har us
+# aadmi ko dikhti hai jo panel kholta hai. Secret backend ki .env me
+# rehte hain, yahan nahi.
+#
+# Local machine par alag pata chahiye to `.env.local` banaiye — woh
+# ignore hoti hai aur `.env` se upar jaati hai.
+.env.local
+.env.*.local
