@@ -74,7 +74,7 @@ const dateQuery = (params) => ({
   groupBy: params.get('groupBy') || 'day',
 });
 
-// ── Paisa ───────────────────────────────────────────────────────────────────
+// ── Money ───────────────────────────────────────────────────────────────────
 function Revenue({ params }) {
   const q = dateQuery(params);
   const { data, loading } = useApi(() => api.get('/analytics/revenue', q),
@@ -90,7 +90,7 @@ function Revenue({ params }) {
         <Stat label="Refunded" value={fmtMoney(d.totals.refunds)} sub="refunds" />
         <Stat label="Net" value={fmtMoney(d.totals.net)} sub="gross − refunds" />
         <Stat label="Average payment" value={fmtMoney(d.totals.averagePayment)}
-              sub={`${fmtNum(d.totals.payingUsers)} logon ne diya`} />
+              sub={`${fmtNum(d.totals.payingUsers)} people paid`} />
       </div>
 
       <Card title="Revenue">
@@ -262,7 +262,7 @@ function Subscribers({ params, patch }) {
               <>
                 {fmtDate(s.endAt)}
                 <div className={`small ${s.daysLeft <= 7 ? 'text-danger fw-semibold' : 'text-secondary'}`}>
-                  {s.daysLeft} din bache
+                  {s.daysLeft} days left
                 </div>
               </>
             ) },
@@ -298,7 +298,7 @@ function UsersTab({ params }) {
       <div className="row g-3 mb-1">
         <Stat label="Total users" value={fmtNum(d.totals.users)} />
         <Stat label="On a plan" value={fmtNum(d.totals.withPlan)} />
-        <Stat label="Aaj active" value={fmtNum(d.totals.activeToday)}
+        <Stat label="Active today" value={fmtNum(d.totals.activeToday)}
               sub={`${fmtNum(d.totals.activeThisWeek)} is hafte`} />
         <Stat label="Blocked / deleted"
               value={`${fmtNum(d.totals.blocked)} / ${fmtNum(d.totals.deleted)}`} />
@@ -352,7 +352,7 @@ function CoinsTab({ params }) {
         <div className="col-lg-4">
           <Card title="Calls">
             <Table columns={[
-              { title: 'Tarah', render: (c) => <Badge kind={c.type === 'video' ? 'primary' : 'secondary'}>{c.type}</Badge> },
+              { title: 'Type', render: (c) => <Badge kind={c.type === 'video' ? 'primary' : 'secondary'}>{c.type}</Badge> },
               { title: 'Calls', className: 'text-end', render: (c) => fmtNum(c.calls) },
               { title: 'Minute', className: 'text-end', render: (c) => fmtNum(Math.round(c.seconds / 60)) },
               { title: 'Coins', className: 'text-end', render: (c) => fmtNum(c.coins) },
@@ -400,7 +400,7 @@ function Engagement({ params }) {
       </Card>
       <Card title="Message types">
         <Table columns={[
-          { title: 'Tarah', render: ([k]) => <Badge kind="dark">{k}</Badge> },
+          { title: 'Type', render: ([k]) => <Badge kind="dark">{k}</Badge> },
           { title: 'Count', className: 'text-end', render: ([, v]) => fmtNum(v) },
         ]} rows={Object.entries(d.messageTypes).sort((a, b) => b[1] - a[1])}
            rowKey={([k]) => k} empty="nothing" />

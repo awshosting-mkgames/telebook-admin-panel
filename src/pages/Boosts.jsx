@@ -10,7 +10,7 @@ import {
 
 const left = (endAt) => {
   const ms = new Date(endAt) - Date.now();
-  if (ms <= 0) return 'khatam';
+  if (ms <= 0) return 'ended';
   const h = Math.floor(ms / 3600000);
   const m = Math.floor((ms % 3600000) / 60000);
   return h ? `${h}h ${m}m bacha` : `${m}m bacha`;
@@ -78,7 +78,7 @@ export default function Boosts() {
       </div>
 
       <ul className="nav nav-pills mb-3 gap-1">
-        {[['active', 'Chalu'], ['expired', 'Ends'], ['cancelled', 'Cancelled'], ['all', 'Sab']]
+        {[['active', 'Running'], ['expired', 'Ended'], ['cancelled', 'Cancelled'], ['all', 'All']]
           .map(([v, label]) => (
             <li className="nav-item" key={v}>
               <Link className={`nav-link ${status === v ? 'active' : ''}`} to={`/boosts?status=${v}`}>

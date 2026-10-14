@@ -253,7 +253,7 @@ function Detail({ id }) {
         <div className="col-lg-7">
           <Card title="The reported item"><Content c={d.content} /></Card>
           {r.description && (
-            <Card title="Reporter ne kya likha">
+            <Card title="What the reporter wrote">
               <div className="p-3">{r.description}</div>
             </Card>
           )}
@@ -270,7 +270,7 @@ function Detail({ id }) {
               {row('Reported by', r.reporter ? (r.reporter.name || r.reporter.mobile) : '—')}
               {row('Reason', r.reason)}
               {row('Status', <StatusBadge status={r.status} />)}
-              {row('Action liya', r.action || 'none')}
+              {row('Action taken', r.action || 'none')}
               {row('Received', fmtDate(r.createdAt))}
               {row('Reviewed', r.reviewedAt ? fmtDate(r.reviewedAt) : '—')}
             </dl>

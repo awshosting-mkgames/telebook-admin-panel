@@ -74,7 +74,7 @@ export function ExportDialog({ userId, chatId, label, onClose }) {
       document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(href);
 
-      toast(`${name} download ho gaya`);
+      toast(`${name} downloaded`);
       onClose();
     } catch (err) { showError(err); }
     finally { setBusy(false); }
@@ -181,7 +181,7 @@ function ChatList({ params, patch }) {
             ) },
             { title: '', className: 'text-end', render: (c) => (
               <Link to={`/messages?chatId=${c._id}`} className="btn btn-sm btn-outline-secondary">
-                Kholo
+                Open
               </Link>
             ) },
           ]} rows={data?.data?.chats || []} empty="No chats found" />
@@ -199,7 +199,7 @@ function Bubble({ m, leftId }) {
 
   let body;
   if (m.isDeleted) {
-    body = <em className="text-secondary">(hata diya gaya)</em>;
+    body = <em className="text-secondary">(removed)</em>;
   } else if (m.messageType === 'location' && m.location) {
     body = (
       <>
@@ -395,7 +395,7 @@ function MessageSearch({ params, patch }) {
       {empty ? (
         <Card>
           <div className="text-center text-secondary py-5">
-            Kuch to chuniye — text, user, tarah ya tareekh.<br />
+            Pick at least one — text, user, type or a date range.<br />
             <span className="small">The whole database is not opened at once.</span>
           </div>
         </Card>
@@ -414,7 +414,7 @@ function MessageSearch({ params, patch }) {
               </Link>
             ) : <span className="text-secondary">—</span> },
             { title: 'Message', render: (m) => m.isDeleted
-              ? <em className="text-secondary">(hata diya gaya)</em>
+              ? <em className="text-secondary">(removed)</em>
               : (
                 <>
                   <span style={{ whiteSpace: 'pre-wrap' }}>

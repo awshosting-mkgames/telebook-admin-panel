@@ -10,7 +10,7 @@ import { Badge, Modal, Spinner, fmtMoney, fmtNum, useToast } from '../ui/index.j
 const LIMITS = [
   ['devices',             'Devices'],
   ['pins',                'Pinned chats'],
-  ['groups',              'Groups banaye'],
+  ['groups',              'Groups created'],
   ['broadcasts',          'Broadcast lists'],
   ['broadcastRecipients', 'Broadcast recipients'],
   ['themes',              'Themes'],

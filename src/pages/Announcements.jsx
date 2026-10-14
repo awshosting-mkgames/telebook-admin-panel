@@ -158,7 +158,7 @@ export default function Announcements() {
       </p>
 
       <ul className="nav nav-pills mb-3 gap-1">
-        {[['all', 'Sab'], ['live', 'Active now'], ['scheduled', 'Scheduled'],
+        {[['all', 'All'], ['live', 'Active now'], ['scheduled', 'Scheduled'],
           ['expired', 'Ends'], ['inactive', 'Switched off']].map(([v, l]) => (
           <li className="nav-item" key={v}>
             <Link className={`nav-link ${status === v ? 'active' : ''}`}
@@ -204,12 +204,12 @@ export default function Announcements() {
             { title: 'Seen', className: 'text-end', render: (a) => (
               <>
                 {fmtNum(a.seenCount)}
-                <div className="small text-secondary">{fmtNum(a.dismissedCount)} ne band ki</div>
+                <div className="small text-secondary">{fmtNum(a.dismissedCount)} dismissed it</div>
               </>
             ) },
             { title: 'Push', render: (a) => a.pushedAt ? (
               <>
-                <span className="small text-success">bhej diya</span>
+                <span className="small text-success">sent</span>
                 <div className="small text-secondary">{fmtDate(a.pushedAt)}</div>
               </>
             ) : <span className="small text-secondary">not sent</span> },

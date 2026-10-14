@@ -66,7 +66,7 @@ export default function Channels() {
               <input className="form-check-input" type="checkbox" name="boosted" value="true"
                      id="boostedOnly" defaultChecked={q.boosted === 'true'} key={q.boosted} />
               <label className="form-check-label small" htmlFor="boostedOnly">
-                Sirf sponsored (boosted)
+                Sponsored (boosted) only
               </label>
             </div>
           </div>
