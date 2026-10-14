@@ -10,11 +10,11 @@ import {
 import { ExportDialog } from './Messages.jsx';
 
 /**
- * Itne messages par ginti ubhari hui dikhti hai.
+ * The count is highlighted from this many messages up.
  *
- *  Yeh sirf AANKH ke liye hai — koi limit nahi lagti, kuch rukta nahi, aur
- *  user ko iska pata bhi nahi chalta. Sirf itna ki list me nazar pad jaaye
- *  ki yeh user bahut zyada bhej raha hai.
+ *  This is purely VISUAL — no limit is applied, nothing is blocked, and the
+ *  user never learns of it. It only makes a heavy sender stand out in the
+ *  list.
  */
 const BUSY_AT = 1000;
 
@@ -366,7 +366,7 @@ function UserDetail({ id, patch }) {
                  }),
                  'Coins updated'
                )}>
-          <div className="mb-3">Balance abhi: <strong>{fmtNum(d.wallet.balance)}</strong> coins</div>
+          <div className="mb-3">Current balance: <strong>{fmtNum(d.wallet.balance)}</strong> coins</div>
           <label className="form-label">Direction</label>
           <select name="direction" className="form-select mb-3">
             <option value="credit">Add coins</option>

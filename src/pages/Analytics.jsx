@@ -16,10 +16,10 @@ const TABS = {
 };
 
 const PRESETS = [
-  { days: 7,   label: '7 din' },
-  { days: 30,  label: '30 din' },
-  { days: 90,  label: '90 din' },
-  { days: 365, label: '1 saal' },
+  { days: 7,   label: '7 days' },
+  { days: 30,  label: '30 days' },
+  { days: 90,  label: '90 days' },
+  { days: 365, label: '1 year' },
 ];
 
 const DATED = ['revenue', 'users', 'coins', 'engagement'];
@@ -86,7 +86,7 @@ function Revenue({ params }) {
   return (
     <>
       <div className="row g-3 mb-1">
-        <Stat label="Kul aaya" value={fmtMoney(d.totals.gross)} sub={`${fmtNum(d.totals.payments)} payments`} />
+        <Stat label="Gross" value={fmtMoney(d.totals.gross)} sub={`${fmtNum(d.totals.payments)} payments`} />
         <Stat label="Refunded" value={fmtMoney(d.totals.refunds)} sub="refunds" />
         <Stat label="Net" value={fmtMoney(d.totals.net)} sub="gross − refunds" />
         <Stat label="Average payment" value={fmtMoney(d.totals.averagePayment)}
@@ -148,7 +148,7 @@ function PlansTab() {
   return (
     <>
       <div className="row g-3 mb-1">
-        <Stat label="Kul users" value={fmtNum(d.totals.users)} />
+        <Stat label="Total users" value={fmtNum(d.totals.users)} />
         <Stat label="On a plan" value={fmtNum(d.totals.subscribed)}
               sub={`${d.totals.conversionPercent}% of users are paying`} />
         <Stat label="Free users" value={fmtNum(d.totals.free)} />
@@ -156,8 +156,8 @@ function PlansTab() {
               sub="worth reminding them" />
       </div>
       <div className="row g-3 mb-1">
-        <Stat label="Naye plan (30 din)" value={fmtNum(d.totals.newLast30Days)} />
-        <Stat label="Khatam hue (30 din)" value={fmtNum(d.totals.expiredLast30Days)} />
+        <Stat label="New plans (30 days)" value={fmtNum(d.totals.newLast30Days)} />
+        <Stat label="Expired (30 days)" value={fmtNum(d.totals.expiredLast30Days)} />
       </div>
 
       <Card title="By plan">
@@ -296,14 +296,14 @@ function UsersTab({ params }) {
   return (
     <>
       <div className="row g-3 mb-1">
-        <Stat label="Kul users" value={fmtNum(d.totals.users)} />
+        <Stat label="Total users" value={fmtNum(d.totals.users)} />
         <Stat label="On a plan" value={fmtNum(d.totals.withPlan)} />
         <Stat label="Aaj active" value={fmtNum(d.totals.activeToday)}
               sub={`${fmtNum(d.totals.activeThisWeek)} is hafte`} />
         <Stat label="Blocked / deleted"
               value={`${fmtNum(d.totals.blocked)} / ${fmtNum(d.totals.deleted)}`} />
       </div>
-      <Card title="Naye users">
+      <Card title="New users">
         <BarChart points={d.signups.map((s) => ({ label: s.bucket, value: s.count }))} />
       </Card>
       <div className="text-secondary small">
@@ -325,8 +325,8 @@ function CoinsTab({ params }) {
   return (
     <>
       <div className="row g-3 mb-1">
-        <Stat label="Diye gaye" value={fmtNum(d.credited.total)} sub="bought + bonus + refunds" />
-        <Stat label="Kharch hue" value={fmtNum(d.debited.total)} sub="calls + boosts" />
+        <Stat label="Credited" value={fmtNum(d.credited.total)} sub="bought + bonus + refunds" />
+        <Stat label="Spent" value={fmtNum(d.debited.total)} sub="calls + boosts" />
         <Stat label="Held by users" value={fmtNum(d.outstanding.coins)}
               sub={`${fmtNum(d.outstanding.wallets)} wallets`} />
         <Stat label="On boosts" value={fmtNum(d.boosts.coins)} sub={`${fmtNum(d.boosts.count)} boosts`} />
@@ -342,7 +342,7 @@ function CoinsTab({ params }) {
           </Card>
         </div>
         <div className="col-lg-4">
-          <Card title="Coins kahan gaye">
+          <Card title="Where coins went">
             <Table columns={[
               { title: 'On what', render: ([k]) => k },
               { title: 'Coins', className: 'text-end', render: ([, v]) => fmtNum(v) },

@@ -30,8 +30,8 @@ function Wallets({ params, patch }) {
         ) : <span className="text-secondary">(deleted user)</span> },
         { title: 'Balance', className: 'text-end',
           render: (w) => <span className="fs-5 fw-semibold">{fmtNum(w.balance)}</span> },
-        { title: 'Kul aaye', className: 'text-end', render: (w) => fmtNum(w.totalCredited) },
-        { title: 'Kul gaye', className: 'text-end', render: (w) => fmtNum(w.totalDebited) },
+        { title: 'Credited', className: 'text-end', render: (w) => fmtNum(w.totalCredited) },
+        { title: 'Debited', className: 'text-end', render: (w) => fmtNum(w.totalDebited) },
         { title: 'Last activity', render: (w) => <span className="small text-secondary">{fmtDate(w.lastTxAt)}</span> },
         { title: '', className: 'text-end', render: (w) => w.user && can('coins.view') && (
           <Link to={`/coins?tab=ledger&userId=${w.user._id}`} className="btn btn-sm btn-outline-secondary">

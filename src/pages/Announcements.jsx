@@ -175,7 +175,7 @@ export default function Announcements() {
                 <div className="fw-semibold">
                   {a.title}
                   <Badge kind={KIND[a.kind] || 'secondary'}>{a.kind}</Badge>
-                  {a.isLive && <Badge kind="success">abhi dikh rahi</Badge>}
+                  {a.isLive && <Badge kind="success">live now</Badge>}
                 </div>
                 <div className="small text-secondary" style={{ maxWidth: 420 }}>
                   {String(a.body).slice(0, 110)}{a.body.length > 110 ? '…' : ''}

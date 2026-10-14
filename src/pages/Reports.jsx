@@ -197,7 +197,7 @@ function Detail({ id }) {
       payload: { status: 'dismissed', action: 'none' },
     },
     remove: {
-      title: 'Content hatao', danger: true,
+      title: 'Remove the content', danger: true,
       body: 'The reported item stops showing in the app. The account stays active.',
       payload: { status: 'reviewed', action: 'content_removed', removeContent: true },
     },

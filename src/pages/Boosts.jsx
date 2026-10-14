@@ -72,8 +72,8 @@ export default function Boosts() {
       )}
 
       <div className="row g-3 mb-1">
-        <Stat label="Kul boosts" value={fmtNum(b.totals.boosts)} col="col-6 col-lg-3" />
-        <Stat label="Kul coins" value={fmtNum(b.totals.coinsSpent)} sub="spent on boosts"
+        <Stat label="Total boosts" value={fmtNum(b.totals.boosts)} col="col-6 col-lg-3" />
+        <Stat label="Total coins" value={fmtNum(b.totals.coinsSpent)} sub="spent on boosts"
               col="col-6 col-lg-3" />
       </div>
 

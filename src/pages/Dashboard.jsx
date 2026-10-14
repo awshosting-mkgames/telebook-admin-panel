@@ -204,7 +204,7 @@ export default function Dashboard() {
       {/* ── Users ── */}
       <h2 className="h6 text-secondary mb-2">Users</h2>
       <div className="row g-3 mb-1">
-        <Stat label="Kul users" value={fmtNum(d?.users?.total)}
+        <Stat label="Total users" value={fmtNum(d?.users?.total)}
               sub={`${fmtNum(d?.users?.newToday)} today · ${fmtNum(d?.users?.newThisWeek)} this week`} />
         <Stat label="Active today" value={fmtNum(ua?.totals?.activeToday)}
               sub={`${fmtNum(ua?.totals?.activeThisWeek)} this week`} />

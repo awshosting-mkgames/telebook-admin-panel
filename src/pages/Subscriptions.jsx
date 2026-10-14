@@ -141,7 +141,7 @@ export default function Subscriptions() {
                   <span className={soon ? 'text-danger fw-semibold' : ''}>{fmtDate(s.endAt)}</span>
                   {s.status === 'active' && (
                     <div className="small text-secondary">
-                      {d > 0 ? `${d} day(s) left` : 'aaj khatam'}
+                      {d > 0 ? `${d} day(s) left` : 'ends today'}
                     </div>
                   )}
                 </>

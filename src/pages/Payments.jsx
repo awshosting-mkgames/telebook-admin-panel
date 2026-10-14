@@ -40,7 +40,7 @@ function ModeCard({ k, label, configured, effective, warnings, canConfig, onTogg
             <div className="form-check form-switch">
               <input className="form-check-input" type="checkbox" role="switch" id={`mode-${k}`}
                      checked={!!configured[k]} onChange={(e) => onToggle(k, e.target.checked)} />
-              <label className="form-check-label small" htmlFor={`mode-${k}`}>Chalu rakho</label>
+              <label className="form-check-label small" htmlFor={`mode-${k}`}>Keep it on</label>
             </div>
           )}
         </div>
@@ -96,7 +96,7 @@ export default function Payments() {
       <h1 className="h4 mb-3">Payments</h1>
 
       <div className="row g-3 mb-1">
-        <Stat label="Kul revenue" value={fmtMoney(total, m?.currency)} sub="successful payments only" />
+        <Stat label="Total revenue" value={fmtMoney(total, m?.currency)} sub="successful payments only" />
         {Object.entries(rev).map(([k, r]) => (
           <Stat key={k} label={k} value={fmtMoney(r.amount, m?.currency)}
                 sub={`${fmtNum(r.count)} payments`} />
