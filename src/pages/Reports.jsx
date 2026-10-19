@@ -17,11 +17,15 @@ function Queue({ params, patch }) {
     status: params.get('status') || 'pending',
     type: params.get('type') || '',
     reason: params.get('reason') || '',
+    from: params.get('from') || '',
+    to: params.get('to') || '',
+    reporter: params.get('reporter') || '',
+    reportedUser: params.get('reportedUser') || '',
     page: Number(params.get('page')) || 1,
     limit: 25,
   };
   const { data, loading } = useApi(() => api.get('/reports', q),
-    [q.status, q.type, q.reason, q.page]);
+    [q.status, q.type, q.reason, q.from, q.to, q.reporter, q.reportedUser, q.page]);
   const sum = data?.data?.summary || {};
 
   return (
@@ -29,7 +33,7 @@ function Queue({ params, patch }) {
       <h1 className="h4 mb-3">Reports</h1>
 
       <ul className="nav nav-pills mb-3 gap-1">
-        {[['pending', 'Pending'], ['reviewed', 'Reviewed'],
+        {[['pending', 'Pending'], ['reviewed', 'Reviewed'], ['resolved', 'Resolved'],
           ['dismissed', 'Dismissed'], ['all', 'All']].map(([v, label]) => (
           <li className="nav-item" key={v}>
             <Link className={`nav-link ${q.status === v ? 'active' : ''}`} to={`/reports?status=${v}`}>
@@ -43,7 +47,13 @@ function Queue({ params, patch }) {
       <form className="card shadow-sm mb-3" onSubmit={(e) => {
         e.preventDefault();
         const f = new FormData(e.target);
-        patch({ status: q.status, type: f.get('type'), reason: f.get('reason'), page: 1 });
+        patch({
+          status: q.status, type: f.get('type'), reason: f.get('reason'),
+          from: f.get('from'), to: f.get('to'),
+          reporter: String(f.get('reporter') || '').trim(),
+          reportedUser: String(f.get('reportedUser') || '').trim(),
+          page: 1,
+        });
       }}>
         <div className="card-body row g-2 align-items-end">
           <div className="col-md-3">
@@ -59,6 +69,23 @@ function Queue({ params, patch }) {
               <option value="">any</option>
               {REASONS.map((v) => <option key={v} value={v}>{v}</option>)}
             </select>
+          </div>
+          <div className="col-md-3">
+            <label className="form-label small mb-1">From</label>
+            <input name="from" type="date" className="form-control" defaultValue={q.from} key={`f${q.from}`} />
+          </div>
+          <div className="col-md-3">
+            <label className="form-label small mb-1">To</label>
+            <input name="to" type="date" className="form-control" defaultValue={q.to} key={`t${q.to}`} />
+          </div>
+          <div className="col-md-3">
+            <label className="form-label small mb-1">Reporter (id or mobile)</label>
+            <input name="reporter" className="form-control" defaultValue={q.reporter} key={`r${q.reporter}`} />
+          </div>
+          <div className="col-md-3">
+            <label className="form-label small mb-1">Reported user (id or mobile)</label>
+            <input name="reportedUser" className="form-control" defaultValue={q.reportedUser}
+                   key={`u${q.reportedUser}`} />
           </div>
           <div className="col-md-2"><button className="btn btn-primary w-100">Apply</button></div>
         </div>
@@ -93,6 +120,14 @@ function Queue({ params, patch }) {
                 {r.action && r.action !== 'none' && (
                   <div className="small text-secondary">{r.action}</div>
                 )}
+                {r.reviewedByName && (
+                  <div className="small text-secondary">by {r.reviewedByName}</div>
+                )}
+                {r.adminNote && (
+                  <div className="small text-secondary" title={r.adminNote}>
+                    “{r.adminNote.slice(0, 40)}{r.adminNote.length > 40 ? '…' : ''}”
+                  </div>
+                )}
               </>
             ) },
             { title: 'Received', render: (r) => <span className="small text-secondary">{fmtDate(r.createdAt)}</span> },
@@ -102,7 +137,7 @@ function Queue({ params, patch }) {
           ]} rows={data?.data?.reports || []}
              empty={q.status === 'pending' ? 'No reports pending — all clear' : 'No reports found'} />
           <Pager pagination={data?.data?.pagination}
-                 onPage={(p) => patch({ status: q.status, page: p })} />
+                 onPage={(p) => patch({ page: p })} />
         </Card>
       )}
     </>
@@ -191,6 +226,16 @@ function Detail({ id }) {
   const r = d.report;
 
   const ACTIONS = {
+    warn: {
+      title: 'Warn the user', danger: false,
+      body: 'The report is marked resolved with a warning recorded against the user. Nothing is removed or suspended.',
+      payload: { status: 'resolved', action: 'warning' },
+    },
+    resolve: {
+      title: 'Resolve report', danger: false,
+      body: 'The report is closed as resolved with no further action.',
+      payload: { status: 'resolved', action: 'none' },
+    },
     dismiss: {
       title: 'Dismiss report', confirmText: 'Confirm', danger: false,
       body: 'The report is closed and nothing else happens.',
@@ -244,7 +289,8 @@ function Detail({ id }) {
       {d.priorReports > 0 && (
         <div className="alert alert-warning py-2">
           There have already been <strong>{fmtNum(d.priorReports)}</strong>{' '}
-          <Link to="/reports?status=all" className="alert-link">reports before</Link> —
+          <Link to={`/reports?status=all&reportedUser=${r.reportedUser?._id || ''}`}
+                className="alert-link">previous reports on this user</Link> —
           this does not look like a one-off.
         </div>
       )}
@@ -273,12 +319,21 @@ function Detail({ id }) {
               {row('Action taken', r.action || 'none')}
               {row('Received', fmtDate(r.createdAt))}
               {row('Reviewed', r.reviewedAt ? fmtDate(r.reviewedAt) : '—')}
+              {row('Reviewed by', r.reviewedByName || '—')}
+              {row('Admin note', r.adminNote || '—')}
+              {row('Previous reports on this user', fmtNum(d.priorReports || 0))}
             </dl>
           </Card>
 
           {can('reports.act') && (
             <Card title="Action">
               <div className="p-3 d-grid gap-2">
+                <button className="btn btn-outline-warning" onClick={() => setDialog('warn')}>
+                  <i className="bi bi-exclamation-triangle" /> Warn user
+                </button>
+                <button className="btn btn-outline-success" onClick={() => setDialog('resolve')}>
+                  <i className="bi bi-check-circle" /> Resolve
+                </button>
                 <button className="btn btn-outline-secondary" onClick={() => setDialog('dismiss')}>
                   <i className="bi bi-x-circle" /> Nothing wrong — dismiss
                 </button>
@@ -294,7 +349,8 @@ function Detail({ id }) {
               </div>
               <div className="px-3 pb-3 small text-secondary">
                 A message is "removed", not erased — the app shows
-                "This message was deleted" and the record stays.
+                "This message was deleted" and the record stays. Every action needs a
+                note, and the report history is never deleted.
               </div>
             </Card>
           )}

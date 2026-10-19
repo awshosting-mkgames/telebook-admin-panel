@@ -114,10 +114,16 @@ export default function Channels() {
               ? <span className="small">till {fmtDate(c.boostEndsAt)}</span>
               : <span className="text-secondary small">—</span> },
             { title: 'Created', render: (c) => <span className="small text-secondary">{fmtDate(c.createdAt)}</span> },
-            { title: '', className: 'text-end', render: (c) => can('channels.moderate') && (
-              <button className="btn btn-sm btn-outline-danger" onClick={() => setWiping(c)}>
-                Remove posts
-              </button>
+            { title: '', className: 'text-end text-nowrap', render: (c) => (
+              <>
+                <Link to={`/boosts?status=all&channel=${c._id}`}
+                      className="btn btn-sm btn-outline-secondary me-1">Boosts</Link>
+                {can('channels.moderate') && (
+                  <button className="btn btn-sm btn-outline-danger" onClick={() => setWiping(c)}>
+                    Remove posts
+                  </button>
+                )}
+              </>
             ) },
           ]} rows={data?.data?.channels || []} empty="No channels found" />
           <Pager pagination={data?.data?.pagination} onPage={(p) => patch({ page: p })} />

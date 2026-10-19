@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { useCan } from '../auth.jsx';
 import { useApi, useQueryState } from '../useApi.js';
 import {
-  Badge, Card, Pager, Spinner, Stat, StatusBadge, Table,
+  Badge, Card, ConfirmBox, Pager, Spinner, Stat, StatusBadge, Table,
   fmtDate, fmtMoney, fmtNum, useToast,
 } from '../ui/index.jsx';
 
@@ -17,7 +18,25 @@ const MODE_HELP = {
             app opens checkout, and a signature plus webhook confirm it.`,
 };
 
-function ModeCard({ k, label, configured, effective, warnings, canConfig, onToggle }) {
+/** Monospace id with a copy button */
+function Copyable({ value }) {
+  const { toast } = useToast();
+  if (!value) return <span className="text-secondary">—</span>;
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(value); toast('Copied'); }
+    catch { toast('Could not copy — select the text instead', 'warning'); }
+  };
+  return (
+    <span className="d-inline-flex align-items-center gap-1">
+      <code className="small text-break">{value}</code>
+      <button type="button" className="btn btn-sm btn-link p-0" onClick={copy} title="Copy">
+        <i className="bi bi-clipboard" />
+      </button>
+    </span>
+  );
+}
+
+function ModeCard({ k, label, configured, effective, warnings, canConfig, onToggle, keyMode }) {
   const warn = (warnings || []).filter((w) => w.toLowerCase().includes(k));
   const on = effective[k];
   return (
@@ -25,7 +44,12 @@ function ModeCard({ k, label, configured, effective, warnings, canConfig, onTogg
       <div className="card shadow-sm h-100">
         <div className="card-body">
           <div className="d-flex align-items-center justify-content-between mb-2">
-            <h6 className="mb-0">{label}</h6>
+            <h6 className="mb-0">
+              {label}
+              {k === 'gateway' && keyMode && (
+                <Badge kind={keyMode === 'live' ? 'danger' : 'info'}>{keyMode.toUpperCase()}</Badge>
+              )}
+            </h6>
             {on ? <Badge kind="success">live</Badge>
               : configured[k] ? <Badge kind="warning">on, but not working</Badge>
               : <Badge>off</Badge>}
@@ -54,6 +78,8 @@ export default function Payments() {
   const { patch } = useQueryState(params, setParams);
   const can = useCan();
   const { toast, showError } = useToast();
+  const [retrying, setRetrying] = useState(null);
+  const [busy, setBusy] = useState(false);
 
   const q = {
     mode: params.get('mode') || '',
@@ -84,6 +110,17 @@ export default function Payments() {
     finally { reload(); }
   };
 
+  const retry = async () => {
+    setBusy(true);
+    try {
+      const out = await api.post(`/payments/${retrying._id}/retry`);
+      toast(out.message || 'Granted');
+      setRetrying(null);
+      reload();
+    } catch (err) { showError(err); }
+    finally { setBusy(false); }
+  };
+
   if (loading) return <><h1 className="h4 mb-3">Payments</h1><Spinner /></>;
 
   const m = data?.m;
@@ -109,7 +146,7 @@ export default function Payments() {
           .map(([k, label]) => (
             <ModeCard key={k} k={k} label={label}
                       configured={m.configured} effective={m.effective} warnings={m.warnings}
-                      canConfig={can('payments.config')}
+                      canConfig={can('payments.config')} keyMode={m.gatewayKeyMode}
                       onToggle={(key, val) => saveModes({ [key]: val })} />
           ))}
       </div>
@@ -199,19 +236,46 @@ export default function Payments() {
           { title: 'Status', render: (t) => (
             <>
               <StatusBadge status={t.status} />
+              {t.status === 'refunded' && t.refundedAt && (
+                <div className="small text-info">refunded {fmtDate(t.refundedAt)}</div>
+              )}
               {t.failureReason && <div className="small text-danger">{t.failureReason}</div>}
             </>
           ) },
-          { title: 'Reference', render: (t) => t.reference
+          { title: 'Razorpay order_id', render: (t) => t.mode === 'gateway'
+            ? <Copyable value={t.providerOrderId} /> : <span className="text-secondary">—</span> },
+          { title: 'Razorpay payment_id', render: (t) => t.mode === 'gateway'
+            ? <Copyable value={t.providerPaymentId} /> : <span className="text-secondary">—</span> },
+          { title: 'Reference', render: (t) => t.mode === 'gateway'
+            ? <span className="text-secondary">—</span>
+            : t.reference
             ? <code className="small text-break">{t.reference}</code>
             : t.createdByName ? <span className="small">{t.createdByName}</span>
             : <span className="text-secondary">—</span> },
           { title: 'Note', render: (t) => t.note
             ? <span className="small">{t.note}</span>
             : <span className="text-secondary">—</span> },
+          { title: '', className: 'text-end', render: (t) =>
+            (can('payments.config') && t.mode === 'gateway' && t.providerPaymentId && !t.grantedAt
+              && ['pending', 'failed'].includes(t.status)) ? (
+              <button className="btn btn-sm btn-outline-primary text-nowrap" onClick={() => setRetrying(t)}>
+                Retry grant
+              </button>
+            ) : null },
         ]} rows={p?.payments || []} empty="No payments found" />
         <Pager pagination={p?.pagination} onPage={(pg) => patch({ page: pg })} />
       </Card>
+
+      {retrying && (
+        <ConfirmBox
+          title="Retry grant"
+          message={<>Razorpay shows a payment (<code>{retrying.providerPaymentId}</code>) but the{' '}
+            {retrying.purpose} was never granted. Run the fulfilment again? It is safe to
+            repeat — nothing is granted twice.</>}
+          confirmText="Retry grant" danger={false} busy={busy}
+          onCancel={() => setRetrying(null)} onConfirm={retry}
+        />
+      )}
     </>
   );
 }

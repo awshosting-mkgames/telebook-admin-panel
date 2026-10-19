@@ -25,17 +25,18 @@ export default function Boosts() {
   const [busy, setBusy] = useState(false);
 
   const status = params.get('status') || 'active';
+  const channel = params.get('channel') || '';
   const page = Number(params.get('page')) || 1;
 
   const { data, loading, reload } = useApi(
     async () => {
       const [boosts, settings] = await Promise.all([
-        api.get('/boosts', { status, page, limit: 25 }),
+        api.get('/boosts', { status, page, limit: 25, channel }),
         api.get('/settings').catch(() => null),
       ]);
       return { b: boosts.data, s: settings?.data?.settings };
     },
-    [status, page]
+    [status, channel, page]
   );
 
   const cancel = async (v) => {
@@ -77,11 +78,18 @@ export default function Boosts() {
               col="col-6 col-lg-3" />
       </div>
 
+      {channel && (
+        <div className="alert alert-info py-2 d-flex align-items-center gap-2">
+          Showing the history of one channel only.
+          <Link to={`/boosts?status=${status}`} className="alert-link ms-auto">Show all channels</Link>
+        </div>
+      )}
+
       <ul className="nav nav-pills mb-3 gap-1">
-        {[['active', 'Running'], ['expired', 'Ended'], ['cancelled', 'Cancelled'], ['all', 'All']]
+        {[['active', 'Live boosts'], ['expired', 'Ended'], ['cancelled', 'Cancelled'], ['all', 'Boost history']]
           .map(([v, label]) => (
             <li className="nav-item" key={v}>
-              <Link className={`nav-link ${status === v ? 'active' : ''}`} to={`/boosts?status=${v}`}>
+              <Link className={`nav-link ${status === v ? 'active' : ''}`} to={`/boosts?status=${v}${channel ? `&channel=${channel}` : ''}`}>
                 {label}
               </Link>
             </li>
@@ -91,9 +99,13 @@ export default function Boosts() {
       <Card>
         <Table columns={[
           { title: 'Channel', render: (x) => x.channel ? (
-            <Link to={`/channels?q=${encodeURIComponent(x.channel.name)}`}
-                  className="text-decoration-none fw-semibold">{x.channel.name}</Link>
+            <Link to={`/boosts?status=all&channel=${x.channel._id}`}
+                  className="text-decoration-none fw-semibold"
+                  title="History of this channel">{x.channel.name}</Link>
           ) : <span className="text-secondary">(deleted channel)</span> },
+          { title: 'Package', render: (x) => x.optionId
+            ? <code className="small">{x.optionId}</code>
+            : <span className="text-secondary">—</span> },
           { title: 'Bought by', render: (x) => x.boughtBy ? (
             <>
               <Link to={`/users?id=${x.boughtBy._id}`} className="text-decoration-none small">
@@ -111,6 +123,16 @@ export default function Boosts() {
               )}
             </>
           ) },
+          { title: 'Subs gained', className: 'text-end', render: (x) => {
+            if (x.subscribersNow == null) return <span className="text-secondary">—</span>;
+            const gain = x.subscribersNow - (x.stats?.subscribersAtStart || 0);
+            return (
+              <span title={`${fmtNum(x.stats?.subscribersAtStart)} at start, ${fmtNum(x.subscribersNow)} now`}
+                    className={gain > 0 ? 'text-success' : ''}>
+                {gain > 0 ? '+' : ''}{fmtNum(gain)}
+              </span>
+            );
+          } },
           { title: 'Started', render: (x) => <span className="small text-secondary">{fmtDate(x.startAt)}</span> },
           { title: 'Ends', render: (x) => (
             <>
@@ -129,7 +151,7 @@ export default function Boosts() {
             ) : null },
         ]} rows={b.boosts}
            empty={status === 'active' ? 'No boost running right now' : 'No boosts found'} />
-        <Pager pagination={b.pagination} onPage={(p) => patch({ status, page: p })} />
+        <Pager pagination={b.pagination} onPage={(p) => patch({ page: p })} />
       </Card>
 
       {cancelling && (

@@ -51,6 +51,13 @@ export default function Dashboard() {
       </Link>
     );
   }
+  if (d?.attention?.usersOverMessageLimit) {
+    attention.push(
+      <Link key="o" to="/users?overLimit=true" className="alert-link">
+        {fmtNum(d.attention.usersOverMessageLimit)} users over their message limit
+      </Link>
+    );
+  }
   if (pl?.totals?.expiringIn7Days) {
     attention.push(
       <Link key="e" to="/analytics?tab=subscribers&expiring=7" className="alert-link">

@@ -38,6 +38,7 @@ function EditPlan({ plan, onClose, onSaved }) {
         price: Number(v.price),
         durationDays: Number(v.durationDays),
         badgeLabel: v.badgeLabel,
+        profileBadgeLabel: (v.profileBadgeLabel || '').trim(),
         badgeColor: v.badgeColor,
         badgeEnabled: v.badgeEnabled === 'on',
         isActive: v.isActive === 'on',
@@ -54,8 +55,12 @@ function EditPlan({ plan, onClose, onSaved }) {
   return (
     <Modal title={`Edit ${plan.name}`} onClose={onClose} onSubmit={submit} busy={busy} size="modal-lg">
       <div className="alert alert-info py-2 small">
-        These changes apply to <strong>new</strong> subscriptions only. Anyone who
-        bought today keeps the terms they bought — what was sold is what they get.
+        Price, duration and limits apply to <strong>new</strong> subscriptions only.
+        Anyone who bought today keeps the terms they bought — what was sold is what they get.
+      </div>
+      <div className="alert alert-warning py-2 small">
+        <strong>Badge changes</strong> (label, colour, on/off, profile label) apply to
+        <strong> all active subscribers immediately</strong>.
       </div>
       <div className="row g-2">
         <div className="col-12">
@@ -76,13 +81,26 @@ function EditPlan({ plan, onClose, onSaved }) {
           <input name="durationDays" type="number" className="form-control" defaultValue={plan.durationDays} />
         </div>
         <div className="col-6">
-          <label className="form-label small mb-1">Badge label</label>
+          <label className="form-label small mb-1">Badge label (secondary name)</label>
           <input name="badgeLabel" className="form-control" defaultValue={plan.badgeLabel || ''} />
+          <div className="form-text">
+            Shown to users as Gold/Silver/Diamond; the primary plan name
+            (Basic/Premium/VIP) never changes in billing.
+          </div>
         </div>
         <div className="col-6">
           <label className="form-label small mb-1">Badge colour</label>
           <input name="badgeColor" type="color" className="form-control form-control-color w-100"
                  defaultValue={plan.badgeColor || '#6c757d'} />
+        </div>
+        <div className="col-12">
+          <label className="form-label small mb-1">Profile label</label>
+          <input name="profileBadgeLabel" className="form-control"
+                 defaultValue={plan.profileBadgeLabel || ''}
+                 placeholder={`Premium ${plan.badgeLabel || '<badge>'} User`} />
+          <div className="form-text">
+            Profile label — leave empty for "Premium &lt;badge&gt; User".
+          </div>
         </div>
         <div className="col-12">
           <div className="form-check">

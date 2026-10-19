@@ -86,6 +86,7 @@ export default function Subscriptions() {
               <option value="active">active</option>
               <option value="expired">expired</option>
               <option value="cancelled">cancelled</option>
+              <option value="superseded">Upgraded/Replaced</option>
               <option value="">all</option>
             </select>
           </div>
@@ -124,11 +125,21 @@ export default function Subscriptions() {
                 <div className="small text-secondary">{fmtMoney(s.price)}</div>
               </>
             ) },
-            { title: 'Status', render: (s) => <StatusBadge status={s.status} /> },
+            { title: 'Status', render: (s) => s.status === 'superseded'
+              ? <Badge kind="secondary">Upgraded/Replaced</Badge>
+              : <StatusBadge status={s.status} /> },
             { title: 'How', render: (s) => (
               <>
                 <Badge kind={s.source === 'manual' ? 'secondary' : 'primary'}>{s.source}</Badge>
                 {s.grantedByName && <div className="small text-secondary">{s.grantedByName}</div>}
+                {s.paymentTransaction && s.user && (
+                  <div className="small">
+                    <Link to={`/payments?userId=${s.user._id}`} className="text-decoration-none"
+                          title={`Payment ${s.paymentTransaction}`}>
+                      <i className="bi bi-receipt" /> payment
+                    </Link>
+                  </div>
+                )}
               </>
             ) },
             { title: 'Started', render: (s) => <span className="small text-secondary">{fmtDate(s.startAt)}</span> },

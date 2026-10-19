@@ -30,6 +30,8 @@ const GROUPS = {
                help: 'What a user gets without a plan. A subscriber\'s limits live in the plan.' },
   media:     { title: 'Media', icon: 'image', help: 'Upload ceilings and how long URLs live.' },
   messaging: { title: 'Messaging', icon: 'chat-dots', help: '' },
+  badges:    { title: 'Plan badges', icon: 'patch-check',
+               help: 'Where the plan badge (Gold / Silver / Diamond) shows in the app: home chat list, other chat lists, chat header, profile, and the ring around the photo. Each placement is switched on or off separately; the per-plan badge itself is edited on the Plans page.' },
   links:     { title: 'Deep links', icon: 'link-45deg', help: 'The invite link domain and paths.' },
 };
 

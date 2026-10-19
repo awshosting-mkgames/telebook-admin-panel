@@ -10,13 +10,14 @@ import {
 import { ExportDialog } from './Messages.jsx';
 
 /**
- * The count is highlighted from this many messages up.
+ * Message limit = per-user `messageLimit`, else the global default
+ * (`messaging.defaultMessageLimit`, returned by the list API).
  *
- *  This is purely VISUAL — no limit is applied, nothing is blocked, and the
- *  user never learns of it. It only makes a heavy sender stand out in the
- *  list.
+ *  This is a REPORT limit only — exceeding it never blocks messaging and the
+ *  user never learns of it. It only puts the user on the "Over limit" list.
  */
-const BUSY_AT = 1000;
+const effLimit = (u, def) => u.messageLimit ?? def;
+const isOver = (u, def) => (u.messageCount || 0) > effLimit(u, def);
 
 // ── List ────────────────────────────────────────────────────────────────────
 function UserList({ params, patch }) {
@@ -25,16 +26,29 @@ function UserList({ params, patch }) {
     status: params.get('status') || 'all',
     plan: params.get('plan') || '',
     sort: params.get('sort') || 'newest',
+    overLimit: params.get('overLimit') === 'true' ? 'true' : '',
     page: Number(params.get('page')) || 1,
     limit: 25,
   };
 
   const { data, loading } = useApi(() => api.get('/users', q),
-    [q.q, q.status, q.plan, q.sort, q.page]);
+    [q.q, q.status, q.plan, q.sort, q.overLimit, q.page]);
+  const def = data?.data?.defaultMessageLimit ?? 1000;
 
   return (
     <>
       <h1 className="h4 mb-3">Users</h1>
+
+      <ul className="nav nav-tabs mb-3">
+        <li className="nav-item">
+          <button className={`nav-link ${q.overLimit ? '' : 'active'}`}
+                  onClick={() => patch({ overLimit: '', page: 1 })}>All users</button>
+        </li>
+        <li className="nav-item">
+          <button className={`nav-link ${q.overLimit ? 'active' : ''}`}
+                  onClick={() => patch({ overLimit: 'true', page: 1 })}>Over limit</button>
+        </li>
+      </ul>
 
       <form className="card shadow-sm mb-3" onSubmit={(e) => {
         e.preventDefault();
@@ -76,8 +90,13 @@ function UserList({ params, patch }) {
         </div>
       </form>
 
+      <div className="form-text mb-2">
+        The message limit is a report only — going over it never blocks a user
+        from sending messages, and the user is not told.
+      </div>
+
       {loading ? <Spinner /> : (
-        <Card title="Users">
+        <Card title={q.overLimit ? 'Users over their message limit' : 'Users'}>
           <Table columns={[
             { title: 'User', render: (u) => (
               <div className="d-flex flex-column">
@@ -99,12 +118,13 @@ function UserList({ params, patch }) {
                   </div>
                 </>
               ) },
-            { title: 'Messages', className: 'text-end', render: (u) => (
-              (u.messageCount || 0) >= BUSY_AT
-                ? <span className="fw-semibold text-warning-emphasis bg-warning-subtle px-2 py-1 rounded"
-                        title={`${BUSY_AT}+ messages`}>{fmtNum(u.messageCount)}</span>
-                : fmtNum(u.messageCount)
-            ) },
+            { title: 'Messages (used / limit)', className: 'text-end', render: (u) => {
+              const txt = `${fmtNum(u.messageCount)}/${fmtNum(effLimit(u, def))}`;
+              return isOver(u, def)
+                ? <span className="fw-semibold text-danger bg-danger-subtle px-2 py-1 rounded"
+                        title="Over the message limit (messaging is not blocked)">{txt}</span>
+                : <span title={u.messageLimit == null ? 'Global default limit' : 'Custom limit'}>{txt}</span>;
+            } },
             { title: 'Status', render: (u) =>
               u.isDeleted ? <StatusBadge status="deleted" />
               : u.isBlocked ? (
@@ -117,7 +137,8 @@ function UserList({ params, patch }) {
             { title: '', className: 'text-end', render: (u) => (
               <Link to={`/users?id=${u._id}`} className="btn btn-sm btn-outline-secondary">Open</Link>
             ) },
-          ]} rows={data?.data?.users || []} empty="No users found" />
+          ]} rows={data?.data?.users || []}
+             empty={q.overLimit ? 'No user is over the limit' : 'No users found'} />
           <Pager pagination={data?.data?.pagination} onPage={(p) => patch({ page: p })} />
         </Card>
       )}
@@ -139,6 +160,10 @@ function UserDetail({ id, patch }) {
   const d = data?.data;
   if (!d) return null;
   const u = d.user;
+  const defLimit = d.defaultMessageLimit ?? 1000;
+  const used = u.messageCount || 0;
+  const limit = u.messageLimit ?? defLimit;
+  const over = used > limit;
 
   const act = async (fn, okMsg) => {
     setBusy(true);
@@ -183,6 +208,16 @@ function UserDetail({ id, patch }) {
           {can('coins.adjust') && (
             <button className="btn btn-sm btn-outline-primary" onClick={() => setDialog('coins')}>
               Adjust coins
+            </button>
+          )}
+          {can('users.limit') && (
+            <button className="btn btn-sm btn-outline-secondary" onClick={() => setDialog('limit')}>
+              Edit limit
+            </button>
+          )}
+          {can('users.limit') && (
+            <button className="btn btn-sm btn-outline-secondary" onClick={() => setDialog('reset')}>
+              Reset counter
             </button>
           )}
           {can('messages.view') && (
@@ -274,19 +309,27 @@ function UserDetail({ id, patch }) {
           <Card title="Activity">
             <Table columns={[
               { title: 'What', render: ([k]) => k },
-              { title: 'Count', className: 'text-end', render: ([k, v]) => (
-                (k === 'Messages sent' && (v || 0) >= BUSY_AT)
-                  ? <span className="fw-semibold text-warning-emphasis bg-warning-subtle px-2 py-1 rounded"
-                          title={`${BUSY_AT}+ messages`}>{fmtNum(v)}</span>
-                  : fmtNum(v)
-              ) },
+              { title: 'Count', className: 'text-end', render: ([k, v]) => fmtNum(v) },
             ]} rows={[
-              ['Messages sent', d.activity.messagesSent],
               ['Direct chats', d.activity.directChats],
               ['Groups joined', d.activity.groupsJoined],
               ['Groups owned', d.activity.groupsOwned],
               ['Calls', d.activity.calls],
             ]} rowKey={([k]) => k} />
+            <dl className="mb-0 p-3 border-top">
+              {row('Usage', (
+                <span className={over ? 'fw-semibold text-danger' : ''}>
+                  {fmtNum(used)} / {fmtNum(limit)}
+                  {over && <Badge kind="danger">over limit</Badge>}
+                </span>
+              ))}
+              {row('Remaining', over ? '0' : fmtNum(limit - used))}
+              {row('Limit source', u.messageLimit == null
+                ? `global default (${fmtNum(defLimit)})` : 'custom for this user')}
+            </dl>
+            <div className="form-text px-3 pb-3">
+              The limit is for reporting only — going over it never blocks messaging.
+            </div>
           </Card>
         </div>
 
@@ -378,6 +421,40 @@ function UserDetail({ id, patch }) {
           <input name="reason" className="form-control" required placeholder="e.g. 'paid cash at the shop'" />
           <div className="form-text">It goes to the audit log — every entry touching money has to be answerable.</div>
         </Modal>
+      )}
+
+      {dialog === 'limit' && (
+        <Modal title="Edit message limit" onClose={() => setDialog(null)} confirmText="Save" busy={busy}
+               onSubmit={(v) => act(
+                 () => api.put(`/users/${u._id}/message-limit`, {
+                   limit: v.limit === '' ? null : Number(v.limit),
+                 }),
+                 'Limit updated'
+               )}>
+          <div className="mb-3">Used so far: <strong>{fmtNum(used)}</strong> messages</div>
+          <label className="form-label">Limit</label>
+          <input name="limit" type="number" min="0" className="form-control"
+                 defaultValue={u.messageLimit ?? ''} placeholder={`empty = global default (${fmtNum(defLimit)})`} />
+          <div className="form-text">
+            Empty uses the global default. Going over the limit only adds the user
+            to the "Over limit" list — messaging is never blocked. The change is
+            written to the audit log.
+          </div>
+        </Modal>
+      )}
+
+      {dialog === 'reset' && (
+        <ConfirmBox
+          title="Reset message counter"
+          message={<>The message counter of <strong>{u.mobile}</strong> ({fmtNum(used)} sent)
+            goes back to 0.</>}
+          confirmText="Reset" needReason busy={busy}
+          onCancel={() => setDialog(null)}
+          onConfirm={(v) => act(
+            () => api.post(`/users/${u._id}/reset-message-count`, { reason: v.reason }),
+            'Message counter reset'
+          )}
+        />
       )}
 
       {dialog?.revoke && (
