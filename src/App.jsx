@@ -17,6 +17,9 @@ import Payments      from './pages/Payments.jsx';
 import Channels      from './pages/Channels.jsx';
 import Boosts        from './pages/Boosts.jsx';
 import Stickers      from './pages/Stickers.jsx';
+import Themes        from './pages/Themes.jsx';
+import Emojis        from './pages/Emojis.jsx';
+import Devices       from './pages/Devices.jsx';
 import Announcements from './pages/Announcements.jsx';
 import Settings      from './pages/Settings.jsx';
 import Audit         from './pages/Audit.jsx';
@@ -30,6 +33,7 @@ export const ROUTES = [
 
   { section: 'People' },
   { path: '/users',         title: 'Users',         icon: 'people',         el: <Users />,         perm: ['users.view'] },
+  { path: '/devices',       title: 'Devices',       icon: 'phone',          el: <Devices />,       perm: ['users.view'] },
   { path: '/reports',       title: 'Reports',       icon: 'flag',           el: <Reports />,       perm: ['reports.view'] },
   { path: '/messages',      title: 'Chats',         icon: 'chat-left-text', el: <Messages />,      perm: ['messages.view'] },
 
@@ -43,6 +47,8 @@ export const ROUTES = [
   { path: '/channels',      title: 'Channels',      icon: 'broadcast',      el: <Channels />,      perm: ['channels.view'] },
   { path: '/boosts',        title: 'Boosts',        icon: 'rocket',         el: <Boosts />,        perm: ['channels.view'] },
   { path: '/stickers',      title: 'Stickers',      icon: 'emoji-smile',    el: <Stickers />,      perm: ['stickers.manage'] },
+  { path: '/emojis',        title: 'Emoji packs',   icon: 'emoji-laughing', el: <Emojis />,        perm: ['stickers.manage'] },
+  { path: '/themes',        title: 'Themes',        icon: 'palette',        el: <Themes />,        perm: ['stickers.manage'] },
   { path: '/announcements', title: 'Announcements', icon: 'megaphone',      el: <Announcements />, perm: ['announcements.manage'] },
 
   { section: 'System' },
