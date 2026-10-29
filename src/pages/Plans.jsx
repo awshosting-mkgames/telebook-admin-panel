@@ -272,6 +272,13 @@ export default function Plans() {
 
       {can('settings.view') && <RolloutCard />}
 
+      {!(data?.data?.plans || []).some((p) => !p.isFree && p.isActive) && (
+        <div className="alert alert-warning py-2 small">
+          No paid plan is active, so the app's Plans screen will show an empty list.
+          Activate at least one plan below (Edit) to show it to users.
+        </div>
+      )}
+
       <div className="row g-3">
         {(data?.data?.plans || []).map((p) => (
           <div className="col-md-6 col-xl-4" key={p.code}>
