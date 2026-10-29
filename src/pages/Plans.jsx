@@ -167,6 +167,93 @@ function EditPlan({ plan, onClose, onSaved }) {
   );
 }
 
+// ── Plan system switch (rollout) ─────────────────────────────────────────────
+//  Master switch + "purani APK ko sab khula". Naya build X-App-Build header
+//  bhejta hai; uske bina wali app ko plans lagte hi nahi.
+function RolloutCard() {
+  const can = useCan();
+  const { toast, showError } = useToast();
+  const { data, loading, reload } = useApi(() => api.get('/settings'), []);
+  const [busy, setBusy] = useState(false);
+  if (loading || !data?.data) return null;
+
+  const s = data.data.settings;
+  const locked = data.data.envLocked || [];
+  const lockedBy = data.data.envLockedBy || {};
+  const plansOn = s.features?.plans !== false;
+  const exempt = s.planRollout?.legacyClientsExempt !== false;
+  const minBuild = s.planRollout?.minAppBuild ?? 0;
+  const canEdit = can('settings.edit');
+  const planLock = locked.includes('features.plans');
+
+  const save = async (patch, msg) => {
+    setBusy(true);
+    try { await api.put('/settings', patch); toast(msg); reload(); }
+    catch (err) { showError(err); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <div className="card shadow-sm mb-3">
+      <div className="card-body">
+        <div className="d-flex align-items-center gap-3 flex-wrap">
+          <div>
+            <div className="fw-semibold">
+              Plan system{' '}
+              <span className={`badge ${plansOn ? 'bg-success' : 'bg-secondary'}`}>{plansOn ? 'ON' : 'OFF'}</span>
+            </div>
+            <div className="small text-secondary">
+              OFF = everyone gets every feature, the Plans screen is hidden and nothing can be bought.
+            </div>
+          </div>
+          {canEdit && (
+            <button className={`btn btn-sm ms-auto ${plansOn ? 'btn-outline-danger' : 'btn-success'}`}
+                    disabled={busy || planLock}
+                    onClick={() => save({ 'features.plans': !plansOn }, `Plan system ${plansOn ? 'switched off' : 'switched on'}`)}>
+              {plansOn ? 'Switch off' : 'Switch on'}
+            </button>
+          )}
+        </div>
+        {planLock && (
+          <div className="alert alert-warning py-2 small mt-2 mb-0">
+            This switch is fixed in the server's <code>.env</code> ({lockedBy['features.plans'] || 'FEATURE_PLANS'}).
+            Remove that line and restart the server to control it from here.
+          </div>
+        )}
+
+        <hr className="my-3" />
+        <div className="d-flex align-items-center gap-3 flex-wrap">
+          <div>
+            <div className="fw-semibold">Old app versions keep full access</div>
+            <div className="small text-secondary">
+              When ON, builds that do not send the <code>X-App-Build</code> header (the old APK) are never limited,
+              even while the plan system is ON. Only the new build follows the plans.
+            </div>
+          </div>
+          {canEdit && (
+            <div className="form-check form-switch ms-auto">
+              <input className="form-check-input" type="checkbox" role="switch" id="legacyExempt"
+                     checked={exempt} disabled={busy}
+                     onChange={() => save({ 'planRollout.legacyClientsExempt': !exempt },
+                       exempt ? 'Old apps now follow plans too' : 'Old apps keep full access')} />
+            </div>
+          )}
+        </div>
+        {exempt && (
+          <form className="d-flex align-items-center gap-2 mt-2"
+                onSubmit={(e) => { e.preventDefault(); save({ 'planRollout.minAppBuild': Number(e.target.minBuild.value) || 0 }, 'Minimum build saved'); }}>
+            <label className="small text-secondary mb-0" htmlFor="minBuild">Treat builds below</label>
+            <input id="minBuild" name="minBuild" type="number" min="0" className="form-control form-control-sm"
+                   style={{ maxWidth: 110 }} defaultValue={minBuild} disabled={!canEdit} />
+            <span className="small text-secondary">as old (0 = any build that sends the header is new)</span>
+            {canEdit && <button className="btn btn-sm btn-outline-secondary ms-auto" disabled={busy}>Save</button>}
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function Plans() {
   const can = useCan();
   const { data, loading, reload } = useApi(() => api.get('/plans'), []);
@@ -182,6 +269,8 @@ export default function Plans() {
           See subscriptions
         </Link>
       </div>
+
+      {can('settings.view') && <RolloutCard />}
 
       <div className="row g-3">
         {(data?.data?.plans || []).map((p) => (
