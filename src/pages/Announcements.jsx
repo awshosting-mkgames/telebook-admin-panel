@@ -101,6 +101,15 @@ function Form({ a = {} }) {
                defaultChecked={a.isActive !== false} />
         <label className="form-check-label" htmlFor="annActive">Running</label>
       </div>
+      {!a._id && (
+        <div className="form-check mt-2">
+          <input className="form-check-input" type="checkbox" name="sendPushNow" id="annPushNow" />
+          <label className="form-check-label" htmlFor="annPushNow">Also send a push notification now</label>
+          <div className="form-text">
+            The notice always appears on the Channels screen in the app. A push cannot be recalled.
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -117,6 +126,7 @@ const readForm = (v) => ({
   priority: Number(v.priority) || 0,
   dismissible: v.dismissible === 'on',
   isActive: v.isActive === 'on',
+  sendPushNow: v.sendPushNow === 'on',
 });
 
 export default function Announcements() {

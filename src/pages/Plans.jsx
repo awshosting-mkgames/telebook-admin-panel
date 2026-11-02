@@ -4,6 +4,7 @@ import { api } from '../api.js';
 import { useCan } from '../auth.jsx';
 import { useApi } from '../useApi.js';
 import { Badge, Modal, Spinner, fmtMoney, fmtNum, useToast } from '../ui/index.jsx';
+import FeatureSwitches from '../ui/FeatureSwitches.jsx';
 
 // Limits: -1 means unlimited. An empty box shows as unlimited here, so nobody
 // has to remember to type "-1".
@@ -181,6 +182,8 @@ function RolloutCard() {
   const locked = data.data.envLocked || [];
   const lockedBy = data.data.envLockedBy || {};
   const plansOn = s.features?.plans !== false;
+  const enforcing = s.features?.enforceLimits === true;
+  const enforceLock = locked.includes('features.enforceLimits');
   const exempt = s.planRollout?.legacyClientsExempt !== false;
   const minBuild = s.planRollout?.minAppBuild ?? 0;
   const canEdit = can('settings.edit');
@@ -221,6 +224,27 @@ function RolloutCard() {
           </div>
         )}
 
+        <hr className="my-3" />
+        <div className="d-flex align-items-center gap-3 flex-wrap">
+          <div>
+            <div className="fw-semibold">
+              Enforce plan limits{' '}
+              <span className={`badge ${enforcing && plansOn ? 'bg-success' : 'bg-secondary'}`}>{enforcing && plansOn ? 'ON' : 'OFF'}</span>
+            </div>
+            <div className="small text-secondary">
+              ON = groups, broadcasts, broadcast members and favourites are blocked once a user reaches their plan limit
+              (the app then shows an Upgrade option). Applies only while the Plan system is ON. Free-plan limits come from Settings → limits.
+            </div>
+          </div>
+          {canEdit && (
+            <div className="form-check form-switch ms-auto">
+              <input className="form-check-input" type="checkbox" role="switch" id="enforceLimits"
+                     checked={enforcing} disabled={busy || enforceLock}
+                     onChange={() => save({ 'features.enforceLimits': !enforcing },
+                       enforcing ? 'Plan limits no longer enforced' : 'Plan limits are now enforced')} />
+            </div>
+          )}
+        </div>
         <hr className="my-3" />
         <div className="d-flex align-items-center gap-3 flex-wrap">
           <div>
@@ -271,6 +295,14 @@ export default function Plans() {
       </div>
 
       {can('settings.view') && <RolloutCard />}
+      {can('settings.view') && <FeatureSwitches />}
+
+      {!(data?.data?.plans || []).some((p) => !p.isFree && p.isActive) && (
+        <div className="alert alert-warning py-2 small">
+          No paid plan is active, so the app's Plans screen will show an empty list.
+          Activate at least one plan below (Edit) to show it to users.
+        </div>
+      )}
 
       <div className="row g-3">
         {(data?.data?.plans || []).map((p) => (

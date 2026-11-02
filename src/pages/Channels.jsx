@@ -14,6 +14,7 @@ export default function Channels() {
   const can = useCan();
   const { toast, showError } = useToast();
   const [wiping, setWiping] = useState(null);
+  const [faking, setFaking] = useState(null);
   const [busy, setBusy] = useState(false);
 
   const q = {
@@ -32,6 +33,23 @@ export default function Channels() {
       const out = await api.post(`/channels/${wiping._id}/remove-posts`, { reason: v.reason });
       toast(out.message || 'Posts removed');
       setWiping(null);
+      reload();
+    } catch (err) { showError(err); }
+    finally { setBusy(false); }
+  };
+
+  const saveFake = async (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    setBusy(true);
+    try {
+      const out = await api.put(`/channels/${faking._id}/fake-stats`, {
+        fakeSubscribers: f.get('fakeSubscribers'),
+        fakeViews: f.get('fakeViews'),
+        reason: f.get('reason') || undefined,
+      });
+      toast(out.message || 'Saved');
+      setFaking(null);
       reload();
     } catch (err) { showError(err); }
     finally { setBusy(false); }
@@ -104,7 +122,16 @@ export default function Channels() {
             { title: 'Category', render: (c) => c.category
               ? <Badge kind="light">{c.category}</Badge>
               : <span className="text-secondary">—</span> },
-            { title: 'Subscribers', className: 'text-end', render: (c) => fmtNum(c.subscriberCount) },
+            { title: 'Subscribers', className: 'text-end', render: (c) => (
+              <>
+                {fmtNum(c.subscriberCount)}
+                {(c.fakeSubscribers > 0 || c.fakeViews > 0) && (
+                  <div className="small text-secondary">
+                    real {fmtNum(c.realSubscriberCount)} · +{fmtNum(c.fakeSubscribers)} subs · +{fmtNum(c.fakeViews)} views/post
+                  </div>
+                )}
+              </>
+            ) },
             { title: 'Created by', render: (c) => c.creator ? (
               <Link to={`/users?id=${c.creator._id}`} className="text-decoration-none small">
                 {c.creator.name || c.creator.mobile}
@@ -119,6 +146,11 @@ export default function Channels() {
                 <Link to={`/boosts?status=all&channel=${c._id}`}
                       className="btn btn-sm btn-outline-secondary me-1">Boosts</Link>
                 {can('channels.moderate') && (
+                  <button className="btn btn-sm btn-outline-primary me-1" onClick={() => setFaking(c)}>
+                    Boost numbers
+                  </button>
+                )}
+                {can('channels.moderate') && (
                   <button className="btn btn-sm btn-outline-danger" onClick={() => setWiping(c)}>
                     Remove posts
                   </button>
@@ -128,6 +160,36 @@ export default function Channels() {
           ]} rows={data?.data?.channels || []} empty="No channels found" />
           <Pager pagination={data?.data?.pagination} onPage={(p) => patch({ page: p })} />
         </Card>
+      )}
+
+      {faking && (
+        <div className="modal d-block" style={{ background: 'rgba(0,0,0,.4)' }} onClick={() => !busy && setFaking(null)}>
+          <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
+            <form className="modal-content" onSubmit={saveFake}>
+              <div className="modal-header">
+                <h5 className="modal-title">Boost numbers — {faking.channelName}</h5>
+              </div>
+              <div className="modal-body">
+                <p className="small text-secondary">
+                  Display-only numbers added on top of the real ones (real subscribers: {fmtNum(faking.realSubscriberCount)}).
+                  Set 0 to remove.
+                </p>
+                <label className="form-label small mb-1">Fake subscribers</label>
+                <input name="fakeSubscribers" type="number" min="0" step="1" className="form-control mb-3"
+                       defaultValue={faking.fakeSubscribers || 0} required />
+                <label className="form-label small mb-1">Fake views added to every post</label>
+                <input name="fakeViews" type="number" min="0" step="1" className="form-control mb-3"
+                       defaultValue={faking.fakeViews || 0} required />
+                <label className="form-label small mb-1">Reason (optional, goes to audit log)</label>
+                <input name="reason" className="form-control" />
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-light" disabled={busy} onClick={() => setFaking(null)}>Cancel</button>
+                <button className="btn btn-primary" disabled={busy}>Save</button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
       {wiping && (

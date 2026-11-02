@@ -11,6 +11,9 @@ const COLORS = [
   ['background', 'Background'],
   ['surface',    'Surface / cards'],
   ['text',       'Text'],
+  ['gradientStart', 'Gradient start (header)'],
+  ['gradientEnd',   'Gradient end (header)'],
+  ['bubble',        'Sent message bubble'],
 ];
 
 function ColorField({ name, label, value }) {
