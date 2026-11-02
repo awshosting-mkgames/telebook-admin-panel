@@ -21,6 +21,7 @@ import Themes        from './pages/Themes.jsx';
 import Emojis        from './pages/Emojis.jsx';
 import Devices       from './pages/Devices.jsx';
 import Announcements from './pages/Announcements.jsx';
+import ReviewRequests from './pages/ReviewRequests.jsx';
 import Settings      from './pages/Settings.jsx';
 import Audit         from './pages/Audit.jsx';
 import Admins        from './pages/Admins.jsx';
@@ -35,6 +36,7 @@ export const ROUTES = [
   { path: '/users',         title: 'Users',         icon: 'people',         el: <Users />,         perm: ['users.view'] },
   { path: '/devices',       title: 'Devices',       icon: 'phone',          el: <Devices />,       perm: ['users.view'] },
   { path: '/reports',       title: 'Reports',       icon: 'flag',           el: <Reports />,       perm: ['reports.view'] },
+  { path: '/review-requests', title: 'Review requests', icon: 'person-exclamation', el: <ReviewRequests />, perm: ['reviews.manage'] },
   { path: '/messages',      title: 'Chats',         icon: 'chat-left-text', el: <Messages />,      perm: ['messages.view'] },
 
   { section: 'Money' },

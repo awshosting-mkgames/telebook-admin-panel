@@ -4,6 +4,7 @@ import { api } from '../api.js';
 import { useCan } from '../auth.jsx';
 import { useApi } from '../useApi.js';
 import { Badge, Modal, Spinner, fmtMoney, fmtNum, useToast } from '../ui/index.jsx';
+import FeatureSwitches from '../ui/FeatureSwitches.jsx';
 
 // Limits: -1 means unlimited. An empty box shows as unlimited here, so nobody
 // has to remember to type "-1".
@@ -294,6 +295,7 @@ export default function Plans() {
       </div>
 
       {can('settings.view') && <RolloutCard />}
+      {can('settings.view') && <FeatureSwitches />}
 
       {!(data?.data?.plans || []).some((p) => !p.isFree && p.isActive) && (
         <div className="alert alert-warning py-2 small">

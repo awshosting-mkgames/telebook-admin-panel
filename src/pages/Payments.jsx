@@ -151,6 +151,36 @@ export default function Payments() {
           ))}
       </div>
 
+      {m.gatewayWebhook && (
+        <div className="card shadow-sm mb-3">
+          <div className="card-body">
+            <div className="fw-semibold mb-2">
+              Razorpay setup{' '}
+              <Badge kind={m.gatewayWebhook.keysSet && m.gatewayWebhook.secretSet ? 'success' : 'warning'}>
+                {m.gatewayWebhook.keysSet && m.gatewayWebhook.secretSet ? 'ready' : 'incomplete'}
+              </Badge>
+              {m.gatewayKeyMode && <> <Badge kind={m.gatewayKeyMode === 'live' ? 'danger' : 'info'}>{m.gatewayKeyMode.toUpperCase()} keys</Badge></>}
+            </div>
+            <div className="small text-secondary mb-2">
+              Razorpay Dashboard → Settings → Webhooks → Add new webhook. Paste the URL below, set the same secret you
+              keep in the server <code>.env</code> as <code>RAZORPAY_WEBHOOK_SECRET</code>, and tick these events:{' '}
+              {m.gatewayWebhook.events.map((e) => <code key={e} className="me-2">{e}</code>)}
+            </div>
+            <div className="input-group input-group-sm mb-2">
+              <input className="form-control" readOnly value={m.gatewayWebhook.url} onFocus={(e) => e.target.select()} />
+              <button className="btn btn-outline-secondary" type="button"
+                      onClick={() => navigator.clipboard?.writeText(m.gatewayWebhook.url).then(() => toast('Webhook URL copied'))}>
+                Copy
+              </button>
+            </div>
+            <div className="small">
+              API keys: {m.gatewayWebhook.keysSet ? '✓ set' : '✗ missing (RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET)'} ·
+              Webhook secret: {m.gatewayWebhook.secretSet ? '✓ set' : '✗ missing (RAZORPAY_WEBHOOK_SECRET)'}
+            </div>
+          </div>
+        </div>
+      )}
+
       {can('payments.config') && (
         <div className="card shadow-sm mb-4">
           <div className="card-body">
