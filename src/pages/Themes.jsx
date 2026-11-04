@@ -3,21 +3,25 @@ import { api } from '../api.js';
 import { useApi } from '../useApi.js';
 import { Badge, Card, ConfirmBox, Modal, Spinner, fmtNum, useToast } from '../ui/index.jsx';
 
-// Colours a theme carries. The app reads `accent`; the rest are optional
-// extras. An empty box saves as "not set".
+// Only the two gradient colours are needed. The app derives button / icon / selected
+// colours from them and picks background, text and cards from the user's light/dark mode.
+// The other boxes are optional. An empty box saves as "not set".
 const COLORS = [
   ['primary',    'Primary'],
   ['secondary',  'Secondary'],
   ['background', 'Background'],
   ['surface',    'Surface / cards'],
   ['text',       'Text'],
-  ['gradientStart', 'Gradient start (header)'],
-  ['gradientEnd',   'Gradient end (header)'],
+  ['gradientStart', 'Gradient start (header) — required'],
+  ['gradientEnd',   'Gradient end (buttons, icons) — required'],
   ['bubble',        'Sent message bubble'],
 ];
 
-function ColorField({ name, label, value }) {
-  const [v, setV] = useState(value || '');
+const MAIN_COLORS = ['gradientStart', 'gradientEnd'];
+
+function ColorField({ name, label, value, onChange }) {
+  const [v, setVal] = useState(value || '');
+  const setV = (x) => { setVal(x); onChange?.(x); };
   return (
     <div className="col-6">
       <label className="form-label small mb-1">{label}</label>
@@ -35,6 +39,9 @@ function ColorField({ name, label, value }) {
 function ThemeForm({ theme }) {
   const isNew = !theme;
   const t = theme || {};
+  const [gs, setGs] = useState(t.colors?.gradientStart || '');
+  const [ge, setGe] = useState(t.colors?.gradientEnd || '');
+  const okHex = (c) => /^#[0-9a-f]{3,8}$/i.test(c);
   return (
     <div className="row g-2">
       <div className="col-6">
@@ -47,10 +54,26 @@ function ThemeForm({ theme }) {
         <label className="form-label small mb-1">Name <span className="text-danger">*</span></label>
         <input name="name" className="form-control" defaultValue={t.name || ''} required />
       </div>
-      <ColorField name="accent" label="Accent (shown in the picker)" value={t.accent} />
-      {COLORS.map(([k, label]) => (
-        <ColorField key={k} name={`c.${k}`} label={label} value={t.colors?.[k]} />
+      {COLORS.filter(([k]) => MAIN_COLORS.includes(k)).map(([k, label]) => (
+        <ColorField key={k} name={`c.${k}`} label={label} value={t.colors?.[k]} onChange={k === 'gradientStart' ? setGs : setGe} />
       ))}
+      <div className="col-12">
+        <div className="rounded" style={{ height: 36, background: okHex(gs) && okHex(ge) ? `linear-gradient(90deg, ${gs}, ${ge})` : '#eee' }} />
+        <div className="form-text">Preview — app header gradient (left → right) from these two colours.</div>
+      </div>
+      <div className="col-12 form-text mt-0">
+        Pick just these two colours (e.g. yellow + a matching shade). Buttons, icons, selected options and the
+        sent-message bubble are derived from them; background, text and cards follow the user's light/dark mode.
+      </div>
+      <details className="col-12">
+        <summary className="small text-muted">Advanced (optional)</summary>
+        <div className="row g-2 mt-1">
+          <ColorField name="accent" label="Accent (picker swatch; defaults to gradient end)" value={t.accent} />
+          {COLORS.filter(([k]) => !MAIN_COLORS.includes(k)).map(([k, label]) => (
+            <ColorField key={k} name={`c.${k}`} label={label} value={t.colors?.[k]} />
+          ))}
+        </div>
+      </details>
       <div className="col-6">
         <label className="form-label small mb-1">Sort order</label>
         <input name="sortOrder" type="number" className="form-control" defaultValue={t.sortOrder ?? 0} />
