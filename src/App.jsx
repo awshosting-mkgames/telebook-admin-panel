@@ -23,6 +23,7 @@ import Devices       from './pages/Devices.jsx';
 import Announcements from './pages/Announcements.jsx';
 import ReviewRequests from './pages/ReviewRequests.jsx';
 import Settings      from './pages/Settings.jsx';
+import SystemSettings from './pages/SystemSettings.jsx';
 import Audit         from './pages/Audit.jsx';
 import Admins        from './pages/Admins.jsx';
 
@@ -55,6 +56,7 @@ export const ROUTES = [
 
   { section: 'System' },
   { path: '/settings',      title: 'Settings',      icon: 'sliders',        el: <Settings />,      perm: ['settings.view'] },
+  { path: '/system-settings', title: 'System / Access', icon: 'shield-check', el: <SystemSettings />, perm: ['settings.view'] },
   { path: '/audit',         title: 'Audit log',     icon: 'clock-history',  el: <Audit />,         perm: ['audit.view'] },
   { path: '/admins',        title: 'Admin users',   icon: 'shield-lock',    el: <Admins />,        perm: ['admins.manage'] },
 ];

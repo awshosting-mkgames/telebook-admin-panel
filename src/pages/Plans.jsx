@@ -18,7 +18,7 @@ const LIMITS = [
   ['themes',              'Themes'],
   ['stickerPacks',        'Premium sticker packs'],
   ['emojiPacks',          'Premium emoji packs'],
-  ['autoReply',           'Auto Reply (1 = on)'],
+  ['autoReply',           'Auto Reply'],
 ];
 
 const limVal = (v) => (v === -1 || v === 'unlimited' ? '∞' : fmtNum(v));
@@ -31,7 +31,8 @@ function EditPlan({ plan, onClose, onSaved }) {
     const limits = {};
     for (const [k] of LIMITS) {
       const raw = v[`lim.${k}`];
-      limits[k] = raw === '' ? -1 : Number(raw);
+      // Auto Reply on/off hai (Boolean) — khali/-1 bhejne par server ka save fail hota tha
+      limits[k] = k === 'autoReply' ? raw === '1' : (raw === '' ? -1 : Number(raw));
     }
     setBusy(true);
     try {
@@ -92,12 +93,12 @@ function EditPlan({ plan, onClose, onSaved }) {
         </div>
         <div className="col-6">
           <label className="form-label small mb-1">Price</label>
-          <input name="price" type="number" className="form-control" defaultValue={plan.price} />
+          <input name="price" type="number" min="0" className="form-control" defaultValue={plan.price} required />
         </div>
         {!plan.isFree && <>
         <div className="col-6">
           <label className="form-label small mb-1">Duration (days)</label>
-          <input name="durationDays" type="number" className="form-control" defaultValue={plan.durationDays} />
+          <input name="durationDays" type="number" min="1" className="form-control" defaultValue={plan.durationDays} required />
         </div>
         <div className="col-6">
           <label className="form-label small mb-1">Badge label (secondary name)</label>
@@ -143,7 +144,16 @@ function EditPlan({ plan, onClose, onSaved }) {
           <hr className="my-2" /><strong className="small">Limits</strong>
           <div className="form-text">Empty = unlimited (saved as -1).</div>
         </div>
-        {LIMITS.map(([k, label]) => (
+        {LIMITS.map(([k, label]) => k === 'autoReply' ? (
+          <div className="col-6" key={k}>
+            <label className="form-label small mb-1">{label}</label>
+            <select name={`lim.${k}`} className="form-select"
+                    defaultValue={plan.limits?.[k] === true || plan.limits?.[k] === 1 || plan.limits?.[k] === -1 ? '1' : '0'}>
+              <option value="0">Off</option>
+              <option value="1">On</option>
+            </select>
+          </div>
+        ) : (
           <div className="col-6" key={k}>
             <label className="form-label small mb-1">{label}</label>
             <input name={`lim.${k}`} type="number" className="form-control"

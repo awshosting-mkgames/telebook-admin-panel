@@ -389,7 +389,9 @@ function UserDetail({ id, patch }) {
           <label className="form-label">Plan</label>
           <select name="planCode" className="form-select mb-3" required>
             {plans.map((p) => (
-              <option key={p.code} value={p.code}>{p.name} — ₹{p.price}/{p.durationDays}d</option>
+              <option key={p.code} value={p.code}>
+                {p.code === 'free' ? 'Free — ends the current paid plan' : `${p.name} — ₹${p.price}/${p.durationDays}d`}
+              </option>
             ))}
           </select>
           <label className="form-label">Days (optional)</label>
