@@ -115,11 +115,46 @@ export const request = async (method, path, { body, query } = {}) => {
   return data;
 };
 
+/**
+ * File upload (multipart) — XHR, taaki upload progress mile.
+ *
+ *  Content-Type KABHI manually set nahi karte: browser FormData ke saath
+ *  boundary khud lagata hai, manual header se server file padh hi nahi pata.
+ *  Auth header aur 401 handling `request` jaisi hi hai.
+ */
+export const upload = (path, formData, { onProgress } = {}) => new Promise((resolve, reject) => {
+  if (!store.base) { reject(new ApiError('Server address is not set', 0, 'NO_BASE')); return; }
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', url(path));
+  if (store.token) xhr.setRequestHeader('Authorization', `Bearer ${store.token}`);
+  if (onProgress && xhr.upload) {
+    xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)); };
+  }
+  xhr.onerror = () => reject(new ApiError(
+    'Could not reach the server. Check the address and that it is running.', 0, 'NETWORK'));
+  xhr.onload = () => {
+    let data = {};
+    try { data = JSON.parse(xhr.responseText || '{}'); } catch { /* non-JSON body */ }
+    if (xhr.status === 401) {
+      store.clear();
+      onSessionLost(data.message || 'Your session ended. Please sign in again.');
+      reject(new ApiError(data.message || 'Not authorized', 401, data.code, data));
+    } else if (xhr.status < 200 || xhr.status >= 300) {
+      reject(new ApiError(data.message || data.error || `Request failed (${xhr.status})`,
+        xhr.status, data.code, data));
+    } else {
+      resolve(data);
+    }
+  };
+  xhr.send(formData);
+});
+
 export const api = {
   get:  (p, query) => request('GET', p, { query }),
   post: (p, body)  => request('POST', p, { body }),
   put:  (p, body)  => request('PUT', p, { body }),
   del:  (p, body)  => request('DELETE', p, { body }),
+  upload,
 };
 
 /**
