@@ -25,6 +25,7 @@ function UserList({ params, patch }) {
     q: params.get('q') || '',
     status: params.get('status') || 'all',
     plan: params.get('plan') || '',
+    online: ['online', 'offline'].includes(params.get('online')) ? params.get('online') : '',
     sort: params.get('sort') || 'newest',
     overLimit: params.get('overLimit') === 'true' ? 'true' : '',
     page: Number(params.get('page')) || 1,
@@ -32,8 +33,9 @@ function UserList({ params, patch }) {
   };
 
   const { data, loading } = useApi(() => api.get('/users', q),
-    [q.q, q.status, q.plan, q.sort, q.overLimit, q.page]);
+    [q.q, q.status, q.plan, q.online, q.sort, q.overLimit, q.page]);
   const def = data?.data?.defaultMessageLimit ?? 1000;
+  const pg = data?.data?.pagination;
 
   return (
     <>
@@ -55,6 +57,7 @@ function UserList({ params, patch }) {
         const f = new FormData(e.target);
         patch({
           q: f.get('q'), status: f.get('status'), plan: f.get('plan'),
+          online: f.get('online'),
           sort: f.get('sort'), page: 1,
         });
       }}>
@@ -78,6 +81,14 @@ function UserList({ params, patch }) {
             </select>
           </div>
           <div className="col-md-2">
+            <label className="form-label small mb-1">Presence</label>
+            <select name="online" className="form-select" defaultValue={q.online} key={q.online}>
+              <option value="">All</option>
+              <option value="online">Online</option>
+              <option value="offline">Offline</option>
+            </select>
+          </div>
+          <div className="col-md-2">
             <label className="form-label small mb-1">Sort</label>
             <select name="sort" className="form-select" defaultValue={q.sort} key={q.sort}>
               <option value="newest">Newest</option>
@@ -98,6 +109,9 @@ function UserList({ params, patch }) {
       {loading ? <Spinner /> : (
         <Card title={q.overLimit ? 'Users over their message limit' : 'Users'}>
           <Table columns={[
+            // Sr. No. server ke page/limit se — sort/filter badalne par bhi sahi rehta hai
+            { title: 'Sr. No.', width: '70px', render: (u, i) =>
+              ((pg?.page || q.page) - 1) * (pg?.limit || q.limit) + i + 1 },
             { title: 'User', render: (u) => (
               <div className="d-flex flex-column">
                 <Link to={`/users?id=${u._id}`} className="fw-semibold text-decoration-none">
